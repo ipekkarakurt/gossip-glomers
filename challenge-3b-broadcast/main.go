@@ -4,27 +4,36 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/lrita/cmap"
+
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
 func main() {
 	n := maelstrom.NewNode()
-	var messages []float64
+	var messages cmap.Cmap
 	var neighbors []string
 
 	n.Handle("broadcast", func(msg maelstrom.Message) error {
-		// Unmarshal the message body as a loosely-typed map.
-		var body map[string]any
+		var body struct {
+			Message   int `json:"message"`
+			MessageID int `json:"msg_id"`
+		}
+
 		if err := json.Unmarshal(msg.Body, &body); err != nil {
 			return err
 		}
 
-		messages = append(messages, body["message"].(float64))
+		if _, ok := messages.Load(body.Message); ok {
+			return nil
+		}
+
+		messages.Store(body.Message, true)
 
 		for _, neighbor := range neighbors {
 			n.Send(neighbor, map[string]any{
 				"type":    "broadcast",
-				"message": body["message"],
+				"message": body.Message,
 			})
 		}
 
@@ -40,22 +49,26 @@ func main() {
 	})
 
 	n.Handle("read", func(msg maelstrom.Message) error {
-		// Unmarshal the message body as an loosely-typed map.
 		var body map[string]any
 		if err := json.Unmarshal(msg.Body, &body); err != nil {
 			return err
 		}
 
+		keys := make([]int, 0, messages.Count())
+		messages.Range(func(key, value interface{}) bool {
+			keys = append(keys, key.(int))
+			return true
+		})
+
 		var response = map[string]any{
 			"type":     "read_ok",
-			"messages": messages,
+			"messages": keys,
 		}
 
 		return n.Reply(msg, response)
 	})
 
 	n.Handle("topology", func(msg maelstrom.Message) error {
-		// Unmarshal the message body as an loosely-typed map.
 		var body map[string]any
 		if err := json.Unmarshal(msg.Body, &body); err != nil {
 			return err
