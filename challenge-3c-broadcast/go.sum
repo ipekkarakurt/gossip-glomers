@@ -1,0 +1,4 @@
+github.com/jepsen-io/maelstrom/demo/go v0.0.0-20240408130303-0186f398f965 h1:HlnqZcDPLpwPZifK+6BhoPrn7c9lKu+bJ/3AuFcGQqA=
+github.com/jepsen-io/maelstrom/demo/go v0.0.0-20240408130303-0186f398f965/go.mod h1:i6aVIs5AIOOaQF1lAisBm7DDeWM1Iopf+26UxjagsCU=
+github.com/lrita/cmap v0.0.0-20231108122212-cb084a67f554 h1:a0+bIffIh/HdvvgtPQLRhOef1VDSxZ+8bQiyjQlJzqc=
+github.com/lrita/cmap v0.0.0-20231108122212-cb084a67f554/go.mod h1:Cn9TaoncDT8Tt/aJ7CIZy+t48MaZWDEwhu1bBXwrzLI=
