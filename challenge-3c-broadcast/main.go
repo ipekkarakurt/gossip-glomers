@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/lrita/cmap"
@@ -26,10 +26,6 @@ func main() {
 			return err
 		}
 
-		n.Reply(msg, map[string]any{
-			"type": "broadcast_ok",
-		})
-
 		if _, ok := messages.Load(body.Message); ok {
 			return nil
 		}
@@ -37,29 +33,27 @@ func main() {
 		messages.Store(body.Message, true)
 
 		for _, neighbor := range neighbors {
-			var ackedMu sync.Mutex
-			var acked bool
+			acked := false
+			tries := 0
 			for !acked {
+				tries++
 				n.RPC(neighbor, map[string]any{
 					"type":    "broadcast",
 					"message": body.Message,
 				},
 					func(msg maelstrom.Message) error {
-						ackedMu.Lock()
-						defer ackedMu.Unlock()
 						acked = true
 						return nil
 					})
+				log.Println(fmt.Sprintf("Node %v: Message to Node %v not acked, try #%v", n.ID(), neighbor, tries))
 			}
 			time.Sleep(100 * time.Millisecond)
 
 		}
 
-		var response = map[string]any{
+		return n.Reply(msg, map[string]any{
 			"type": "broadcast_ok",
-		}
-
-		return n.Reply(msg, response)
+		})
 	})
 
 	n.Handle("broadcast_ok", func(msg maelstrom.Message) error {
